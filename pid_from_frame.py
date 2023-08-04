@@ -61,7 +61,7 @@ def line_from_frame(
 
 
 def pid_from_line(
-    center_line, lateral_pid, longitudinal_pid, yaw_pid, width
+    center_line, lateral_pid, longitudinal_pid, yaw_pid, width, angle_tol=5, forward_tol=100
 ):
     """Returns PID output from a center line.
 
@@ -80,7 +80,7 @@ def pid_from_line(
     yaw = 0
     if center_line is not None:
         (longitudinal_error, lateral_error, yaw_error) = error_from_line(
-            center_line, width, angle_tol=2
+            center_line, width, angle_tol=angle_tol, forward_tol=forward_tol
         )
 
         longitudinal = longitudinal_pid.update(longitudinal_error)

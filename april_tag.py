@@ -39,8 +39,8 @@ def get_tags(img) -> list:
 
     tags = at_detector.detect(img, True, camera_params=camera_params, tag_size=0.1)
 
-    if len(tags) > 0:
-        print("tag(s) found!")
+    # if len(tags) > 0:
+    #     print("tag(s) found!")
 
     return tags
 

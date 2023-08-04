@@ -13,6 +13,14 @@ from pid_from_frame import *
 
 print("Main started!")
 
+# Line Detection Parameter
+angle_tol = 5
+forward_tol = 100
+x_intercept_tolerance=25
+lanes_x_tolerance=300
+lanes_y_tolerance=100
+lanes_darkness_threshold=10
+
 # Create the video object
 video = Video()
 FPS = 5
@@ -52,6 +60,8 @@ def _get_frame():
     global yaw_power
     global lateral_power
     global longitudinal_power
+    global vertical_power
+    global FOUND_APRIL_TAG
     count = 0
     center_lines = []
 
@@ -70,16 +80,18 @@ def _get_frame():
                 tags = get_tags(gray)
                 if len(tags) > 0:
                     FOUND_APRIL_TAG = True
+                else:
+                    FOUND_APRIL_TAG = False
 
                 cv2.imwrite("camera_stream.jpg", frame)
                 if not FOUND_APRIL_TAG:
                     try:
                         center_line = line_from_frame(
                             frame[crop_x, crop_y],
-                            x_intercept_tolerance=25,
-                            lanes_x_tolerance=300,
-                            lanes_y_tolerance=100,
-                            lanes_darkness_threshold=10,
+                            x_intercept_tolerance=x_intercept_tolerance,
+                            lanes_x_tolerance=lanes_x_tolerance,
+                            lanes_y_tolerance=lanes_y_tolerance,
+                            lanes_darkness_threshold=lanes_darkness_threshold,
                         )
                         # cv2.imwrite("testing/center.jpg", draw_lines(frame, center_lines, offset=True))
                         center_lines.append(center_line)
@@ -107,6 +119,8 @@ def _get_frame():
                                 PIDLongitudinal,
                                 PIDYaw,
                                 frame.shape[1],
+                                angle_tol,
+                                forward_tol
                             )
                             print("Found a line!")
 
@@ -117,9 +131,17 @@ def _get_frame():
                         longitudinal_power = 0
                         
                 else:
-                    vertical_power, lateral_power, longitudinal_power, yaw_power = pid_from_frame(
-                            frame, PIDVertical=PIDVertical, PIDHorizontal=PIDHorizontal, PIDLongitudinal=PIDLongitudinal, PIDYaw=PIDYaw
-                    )
+                    try:
+                        print("Found a tag!")
+                        vertical_power, lateral_power, longitudinal_power, yaw_power = pid_from_frame(
+                                gray, PIDVertical=PIDVertical, PIDHorizontal=PIDHorizontal, PIDLongitudinal=PIDLongitudinal, PIDYaw=PIDYaw
+                        )
+                    except Exception as e:
+                        print(f"caught while looking for tag: {e}")
+                        yaw_power = 0
+                        lateral_power = 0
+                        longitudinal_power = 0
+                        vertical_power = 0
 
                 print(f"{yaw_power = }")
                 print(f"{longitudinal_power = }")
@@ -153,8 +175,9 @@ def _send_rc():
 def _depth_control():
     global vertical_power
     while True:
-        depth_error = depth_control.get_depth_error(mav_comn, desired_depth=0.5)
-        vertical_power = PIDVertical.update(depth_error) 
+        if not FOUND_APRIL_TAG:
+            depth_error = depth_control.get_depth_error(mav_comn, desired_depth=0.5)
+            vertical_power = PIDVertical.update(depth_error) 
 
 def main():
     # Start the video thread
@@ -162,11 +185,11 @@ def main():
     video_thread.start()
 
     # # Start the RC thread
-    rc_thread = Thread(target=_send_rc)
-    rc_thread.start()
+    # rc_thread = Thread(target=_send_rc)
+    # rc_thread.start()
 
     # Start the Depth thread
-    depth_thread = Thread(targets=_depth_control)
+    depth_thread = Thread(target=_depth_control)
     depth_thread.start()
 
     # Main loop
@@ -175,7 +198,7 @@ def main():
             mav_comn.wait_heartbeat()
     except KeyboardInterrupt:
         video_thread.join()
-        rc_thread.join()
+        # rc_thread.join()
         depth_thread.start()
         bluerov.set_lights(False)
         bluerov.disarm()

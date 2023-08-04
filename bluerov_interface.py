@@ -14,6 +14,10 @@ class BlueROV:
         self.mav_connection.motors_armed_wait()
         print("armed!")
         self.set_lights(True)
+        self.set_vertical_power(0)
+        self.set_lateral_power(0)
+        self.set_longitudinal_power(0)
+        self.set_yaw_rate_power(0)
         self.state = "armed"
 
     def disarm(self):
