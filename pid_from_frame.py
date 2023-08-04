@@ -32,7 +32,12 @@ def line_from_frame(
 
     # Edge/line detection
     edges = find_edges(bw, t1=edges_t1, t2=edges_t2)
-    lines = find_lines(edges, threshold=lines_threshold, min_line_length=min_line_length, max_line_gap=max_line_gap)
+    lines = find_lines(
+        edges,
+        threshold=lines_threshold,
+        min_line_length=min_line_length,
+        max_line_gap=max_line_gap,
+    )
     if len(lines) > 1:
         grouped_lines = group_lines(
             lines,
@@ -44,7 +49,13 @@ def line_from_frame(
             grouped_lines, height, width
         )  # merge groups of lines
         # Lane Detection
-        lanes = detect_lanes(bw, merged_lines, lanes_x_tolerance, lanes_y_tolerance, lanes_darkness_threshold)
+        lanes = detect_lanes(
+            bw,
+            merged_lines,
+            lanes_x_tolerance,
+            lanes_y_tolerance,
+            lanes_darkness_threshold,
+        )
         # Lane picking
         center_lines = merge_lane_lines(lanes, height)  # find the center of each lane
         center_line = pick_center_line(center_lines, width)  # find the closest lane
@@ -61,7 +72,13 @@ def line_from_frame(
 
 
 def pid_from_line(
-    center_line, lateral_pid, longitudinal_pid, yaw_pid, width, angle_tol=5, forward_tol=100
+    center_line,
+    lateral_pid,
+    longitudinal_pid,
+    yaw_pid,
+    width,
+    angle_tol=5,
+    forward_tol=100,
 ):
     """Returns PID output from a center line.
 

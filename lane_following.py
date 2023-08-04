@@ -4,7 +4,8 @@ import numpy as np
 
 from Line import *
 
-forward_power = 0.6 # 30%
+forward_power = 0.6  # 30%
+
 
 def merge_lane_lines(lanes: list[tuple[Line, Line]], height: int) -> list[Line]:
     """Combines the lines of each lane to produce a single center line for each.
@@ -99,12 +100,12 @@ def movement_from_line(
 
     if x_intercept > mid_right:
         # the lane center is right of the middle
-        lateral = ((x_intercept - mid) / width)
+        lateral = (x_intercept - mid) / width
         longitudinal = 0
 
     elif x_intercept < mid_left:
         # the lane center is left of the middle
-        lateral = ((x_intercept - mid) / width)
+        lateral = (x_intercept - mid) / width
         longitudinal = 0
 
     else:

@@ -8,7 +8,9 @@ class BlueROV:
     def __init__(self, mav_connection):
         self.mav_connection = mav_connection
         self.mav_connection.wait_heartbeat()
-        master_id = mav_connection.mode_mapping()["MANUAL"] # The ID for MANUAL mode control. Some of the robots are weird.
+        master_id = mav_connection.mode_mapping()[
+            "MANUAL"
+        ]  # The ID for MANUAL mode control. Some of the robots are weird.
         self.mav_connection.set_mode(master_id)
         self.mav_connection.arducopter_arm()
         self.mav_connection.motors_armed_wait()

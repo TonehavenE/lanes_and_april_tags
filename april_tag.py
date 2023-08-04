@@ -2,11 +2,14 @@ from dt_apriltags import Detector
 import numpy as np
 import cv2
 from pid import *
+
 # import eigency
 from scipy.spatial.transform import Rotation as R
 
 # Create an April Tags detector object
-cameraMatrix = np.array([ 353.571428571, 0, 320, 0, 353.571428571, 180, 0, 0, 1]).reshape((3,3))
+cameraMatrix = np.array(
+    [353.571428571, 0, 320, 0, 353.571428571, 180, 0, 0, 1]
+).reshape((3, 3))
 
 camera_params = (
     cameraMatrix[0, 0],
@@ -74,14 +77,22 @@ def error_relative_to_center(
     y_center = width / 2
 
     return [
-        [(center[0] - x_center)/x_center, (y_center - center[1])/y_center, center[2]]
+        [
+            (center[0] - x_center) / x_center,
+            (y_center - center[1]) / y_center,
+            center[2],
+        ]
         for center in centers
     ]
 
 
-
-
-def pid_from_frame(frame: np.ndarray, PIDHorizontal: PID, PIDVertical: PID, PIDLongitudinal: PID, PIDYaw: PID):
+def pid_from_frame(
+    frame: np.ndarray,
+    PIDHorizontal: PID,
+    PIDVertical: PID,
+    PIDLongitudinal: PID,
+    PIDYaw: PID,
+):
     """Processes a frame to find the PID power output.
 
     Args:
@@ -120,8 +131,8 @@ def process_center_avg(frame: np.ndarray) -> tuple[float, float]:
     Returns:
         tuple[float, float]: the centroid of all of the april tags found in the image, or (width/2, height/2) if none are found
     """
-    meanX = frame.shape[1]/2 # default values
-    meanY = frame.shape[0]/2
+    meanX = frame.shape[1] / 2  # default values
+    meanY = frame.shape[0] / 2
 
     apriltags = get_tags(frame)
     if len(apriltags) > 0:
@@ -148,9 +159,10 @@ def get_heading_to_tag(apriltags: list):
 def rotation_matrix_to_euler_angles(rot_matrix):
     r = R.from_matrix(rot_matrix)
     matrix = r.as_matrix()
-    return r.as_euler('zyx', degrees=False)[1]
+    return r.as_euler("zyx", degrees=False)[1]
 
-def get_distance_to_tag(apriltags: list, goal_distance = 1):
+
+def get_distance_to_tag(apriltags: list, goal_distance=1):
     dist = [tag.pose_t[2] for tag in apriltags]
     # print(apriltags)
     meanY = np.mean(dist)

@@ -16,10 +16,10 @@ print("Main started!")
 # Line Detection Parameter
 angle_tol = 5
 forward_tol = 100
-x_intercept_tolerance=25
-lanes_x_tolerance=300
-lanes_y_tolerance=100
-lanes_darkness_threshold=10
+x_intercept_tolerance = 25
+lanes_x_tolerance = 300
+lanes_y_tolerance = 100
+lanes_darkness_threshold = 10
 
 # Create the video object
 video = Video()
@@ -29,13 +29,15 @@ RC_SLEEP = 0.0
 FOUND_APRIL_TAG = False
 
 # Create the PID object
-PIDHorizontal = PID(35, 0.05, -5, 100) # this will recieve values between -1 and 1.
-PIDLongitudinal = PID(50, 0, 0, 100) # this will recieve values between -1 and 1.
-PIDYaw = PID(20, 0, -5, 100) # this will recieve values between +- pi/2 radians
-PIDVertical = PID(40, 0.00, -10, 100) # this will recieve error in meters
+PIDHorizontal = PID(35, 0.05, -5, 100)  # this will recieve values between -1 and 1.
+PIDLongitudinal = PID(50, 0, 0, 100)  # this will recieve values between -1 and 1.
+PIDYaw = PID(20, 0, -5, 100)  # this will recieve values between +- pi/2 radians
+PIDVertical = PID(40, 0.00, -10, 100)  # this will recieve error in meters
 # Create the mavlink connection
 mav_comn = mavutil.mavlink_connection("udpin:0.0.0.0:14550")
-master_id = mav_comn.mode_mapping()["MANUAL"] # The ID for MANUAL mode control. Some of the robots are weird.
+master_id = mav_comn.mode_mapping()[
+    "MANUAL"
+]  # The ID for MANUAL mode control. Some of the robots are weird.
 # Create the BlueROV object
 bluerov = BlueROV(mav_connection=mav_comn)
 # where to write frames to. If empty string, no photos are written!
@@ -54,6 +56,7 @@ yaw_power = 0
 vertical_power = 0
 crop_x = slice(20, -1)
 crop_y = slice(20, -1)
+
 
 def _get_frame():
     global frame
@@ -76,7 +79,7 @@ def _get_frame():
                 # print("frame found")
                 # April Tag Processing
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                
+
                 tags = get_tags(gray)
                 if len(tags) > 0:
                     FOUND_APRIL_TAG = True
@@ -101,8 +104,9 @@ def _get_frame():
                         if center_lines.count(None) > 5:
                             print("No lines found in last 5 images. ")
                             yaw_power = 10  # %
-                            lateral_power = 0 # %
-                            longitudinal_power = 0 # %
+                            lateral_power = 0  # %
+                            longitudinal_power = 0  # %
+                            
                         good_lines = list(
                             filter(lambda line: line is not None, center_lines)
                         )
@@ -120,7 +124,7 @@ def _get_frame():
                                 PIDYaw,
                                 frame.shape[1],
                                 angle_tol,
-                                forward_tol
+                                forward_tol,
                             )
                             print("Found a line!")
 
@@ -129,12 +133,21 @@ def _get_frame():
                         yaw_power = 0
                         lateral_power = 0
                         longitudinal_power = 0
-                        
+
                 else:
                     try:
                         print("Found a tag!")
-                        vertical_power, lateral_power, longitudinal_power, yaw_power = pid_from_frame(
-                                gray, PIDVertical=PIDVertical, PIDHorizontal=PIDHorizontal, PIDLongitudinal=PIDLongitudinal, PIDYaw=PIDYaw
+                        (
+                            vertical_power,
+                            lateral_power,
+                            longitudinal_power,
+                            yaw_power,
+                        ) = pid_from_frame(
+                            gray,
+                            PIDVertical=PIDVertical,
+                            PIDHorizontal=PIDHorizontal,
+                            PIDLongitudinal=PIDLongitudinal,
+                            PIDYaw=PIDYaw,
                         )
                     except Exception as e:
                         print(f"caught while looking for tag: {e}")
@@ -172,12 +185,14 @@ def _send_rc():
         bluerov.set_vertical_power(int(vertical_power))
         sleep(RC_SLEEP)
 
+
 def _depth_control():
     global vertical_power
     while True:
         if not FOUND_APRIL_TAG:
             depth_error = depth_control.get_depth_error(mav_comn, desired_depth=0.5)
-            vertical_power = PIDVertical.update(depth_error) 
+            vertical_power = PIDVertical.update(depth_error)
+
 
 def main():
     # Start the video thread
